@@ -45,14 +45,20 @@ HTML_TEMPLATE = """
         </form>
 
         <h3>Current Tasks</h3>
-        <ul>
+      <ul>
             {% for t in todos %}
-            <li>
-                <span><strong>#{{ t.id }}</strong> {{ t.task }}</span>
-                <span class="badge {{ t.status }}">{{ t.status }}</span>
+            <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div>
+                    <span><strong>#{{ t.id }}</strong> {{ t.task }}</span>
+                    <span class="badge {{ t.status }}">{{ t.status }}</span>
+                </div>
+                <form action="/delete/{{ t.id }}" method="POST" style="margin: 0;">
+                    <button type="submit" style="background-color: #e74c3c; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+                </form>
             </li>
             {% endfor %}
         </ul>
+
     </div>
 </body>
 </html>
@@ -74,6 +80,13 @@ def add_todo():
     }
     todos.append(new_todo)
     REQUEST_COUNT.labels(method='POST', endpoint='/add', status='200').inc()
+    return render_template_string(HTML_TEMPLATE, todos=todos)
+
+@app.route('/delete/<int:todo_id>', methods=['POST'])
+def delete_todo(todo_id):
+    global todos
+    todos = [t for t in todos if t['id'] != todo_id]
+    REQUEST_COUNT.labels(method='POST', endpoint='/delete', status='200').inc()
     return render_template_string(HTML_TEMPLATE, todos=todos)
 
 @app.route('/api/todos', methods=['GET'])
